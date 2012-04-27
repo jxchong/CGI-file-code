@@ -1,6 +1,6 @@
 #!perl
 #
-# Description: Add frequency and genotype class counts.
+# Description: Add frequency, genotype class counts, and gene annotation info (if available) to an arbitrary file.
 #
 #
 #
@@ -30,7 +30,11 @@ if (!defined $inputfile) {
 
 print STDERR "Reading in allele freqs\n";
 my (%allelefreqs, %genocounts);
-open (FREQ, "$popinfofile") or die "Can't read freqfile $popinfofile\n";
+if ($popinfofile =~ /.bz2$/) {
+	open (FREQ, "bzcat $popinfofile |") or die "Can't read freqfile $popinfofile: $!\n";	
+} else {
+	open (FREQ, "$popinfofile") or die "Can't read freqfile $popinfofile: $!\n";
+}
 <FREQ>;
 while (<FREQ>) {
 	$_ =~ s/\s+$//;
@@ -52,17 +56,22 @@ while (<FREQ>) {
 		$snpname = $line[7];
 	}
 	
-	$allelefreqs{$snpname} = $line[9];
-	@{$genocounts{$snpname}} = @line[10..12,14..16];
+	$allelefreqs{$snpname} = $line[8];
 	
-	# if ($snpname eq 'chr1_95621744_95621747') {
-	# 	# for (my $i=0; $i<=$#line; $i++) {
-	# 	# 	print "$i = $line[$i]\n";
-	# 	# }
-	# 	# print "freq: $allelefreqs{$snpname}\n";
-	# 	# print "genocounts: @{$genocounts{$snpname}}\n";
-	# 	last;
-	# }
+	my $geneannot = (("\t") x 11);
+	if ($line[16]) {
+		$geneannot = $line[16];
+		for (my $i=17; $i<=20; $i++) {
+			if ($line[$i]) {
+				$geneannot .= "\t$line[$i]";
+			} else {
+				$geneannot .= "\t";
+			}
+		}
+	}
+	
+	@{$genocounts{$snpname}} = (@line[9..11,13..15], $geneannot);
+
 }
 close FREQ;
 
@@ -75,7 +84,7 @@ open (FILE, "$inputfile") or die "Cannot open $inputfile file.\n";
 my $header = <FILE>;
 $header =~ s/\s+$//;					# Remove line endings
 my @headercontents = split("\t", $header);
-print OUT join("\t", @headercontents)."\tMAF\tnhomref\tnhet\tnhomalt\tnhommaj\tnhommin\tCR\n";
+print OUT join("\t", @headercontents)."\tMAF\tnhomref\tnhet\tnhomalt\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence\n";
 
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
@@ -91,7 +100,7 @@ while ( <FILE> ) {
 	}
 
 	my $freq = 'NA';
-	my @genotypes = (('NA') x 6);
+	my @genotypes = (('NA') x 8);
 	my $thiscoord = $line[0].'_'.$line[1].'_'.$line[2];
 	
 	if ($line[8]) {
@@ -128,7 +137,7 @@ while ( <FILE> ) {
 close FILE;
 close OUT;
 
-
+print STDERR "done\n";
 
 
 
@@ -137,7 +146,7 @@ sub optionUsage {
 	print "$errorString";
 	print "perl $0 \n";
 	print "\t--i\tinput file (produced by getvar_mastervarfilesbz2_bygeno.pl)\n";
-	print "\t--popinfo\t.popinfo.tsv file produced by calc_popinfo.pl\n";
+	print "\t--popinfo\t.popinfo.tsv or .popinfo.tsv.bz2 file produced by calc_popinfo.pl\n";
 	print "\t--o\toutput file\n";
 	die;
 }

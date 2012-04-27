@@ -52,6 +52,9 @@ if ($mastervarfile !~ m/masterVarBeta/) {
 	print STDERR "input file ($mastervarfile) is not a mastervar file\n";
 	die;
 }
+if ($targetchr !~ m/chr/) {
+	$targetchr = 'chr'.$targetchr;
+}
 
 
 my $targetchrnum = $targetchr;
@@ -72,10 +75,14 @@ my %allowedzygosity = (
 	'het-alt' => 1,
 );
 
+
+my $currchr = 'NA';
 my @keepfields = (2..9, 18, 19, 25..28);
 open (OUT, ">$outputfile");
-my $bzobj = new IO::Uncompress::Bunzip2 $mastervarfile or die "IO::Uncompress::Bunzip2 failed: $Bunzip2Error\n";
-while (<$bzobj>) {
+# my $bzobj = new IO::Uncompress::Bunzip2 $mastervarfile or die "IO::Uncompress::Bunzip2 failed: $Bunzip2Error\n";
+open (BZ, "bzcat $mastervarfile |") or die "Cannot read mastervarfile $mastervarfile: $!\n";
+# while (<$bzobj>) {
+while (<BZ>) {	
 	my $nextline = $_;
 	if ($nextline =~ m/^#/ || $nextline =~ m/^\s*$/) {					# skip header lines
 		next;
@@ -88,11 +95,16 @@ while (<$bzobj>) {
 		my @line = split ("\t", $nextline);
 		my ($thischr, $thisstart, $thisend, $zygosity, $vartype, $refallele, $a1, $a2) = @line[2..9];
 		
+		if ($currchr ne $thischr) {
+			print STDERR "At $thischr: looking for $targetchr:$targetstart-$targetend\n";
+			$currchr = $thischr;
+		}
+		
 		if (defined $targetchr && defined $targetstart && defined $targetend) {
 			my $thischrnum = $thischr;
 			$thischrnum =~ s/chr//;
 
-			if ($thischrnum > $targetchrnum || ($thischr eq $targetchr && $thisend > $targetend)) {
+			if ($thischrnum > $targetchrnum || (($thischr eq $targetchr ) && ($thisend > $targetend))) {
 				last;
 			}
 
@@ -114,7 +126,7 @@ while (<$bzobj>) {
 				for (my $i=0; $i<=$#keepfields; $i++) {
 					my $fieldnum = $keepfields[$i];
 					if (defined $line[$fieldnum]) {
-						print OUT "$line[$fieldnum]\t";
+						print OUT "$line[$fieldnum]\t";			# rs11934749
 					} else {
 						print OUT "\t";
 					}
@@ -125,7 +137,8 @@ while (<$bzobj>) {
 	}
 }
 
-$bzobj->close();
+# $bzobj->close();
+close BZ;
 
 close OUT;
 
