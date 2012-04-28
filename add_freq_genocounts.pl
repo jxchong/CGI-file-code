@@ -35,7 +35,8 @@ if ($popinfofile =~ /.bz2$/) {
 } else {
 	open (FREQ, "$popinfofile") or die "Can't read freqfile $popinfofile: $!\n";
 }
-<FREQ>;
+my $annotationheadline = <FREQ>;
+my @annotationheader = split("\t", $annotationheadline);
 while (<FREQ>) {
 	$_ =~ s/\s+$//;
 	my @line = split("\t", $_);
