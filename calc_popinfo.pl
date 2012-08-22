@@ -1,10 +1,10 @@
 #!perl
 #
-# Description: Calculate allele frequency and genotype counts from testvariants data file.  Combine with gene annotation info (if available) into one file.
+# Description: Calculate allele frequency and genotype counts from testvariants data file.  Combine with gene annotation info (if available) into one file.  Everything is much faster if it's compressed in .bz2 format!!
 #
+# Uses dbNSFP http://sites.google.com/site/jpopgen/dbNSFP
 #
-#
-# Created by Jessica on 2012-04-09
+# Created by Jessica X Chong on 2012-04-09
 
 use strict;
 use warnings;
@@ -15,8 +15,9 @@ use IO::Uncompress::Bunzip2 qw(bunzip2 $Bunzip2Error);
 my ($testvarfile, $outputfile, $geneannotationlistvar, %geneannotations, $dbnsfp_folder);
 my %dbnsfp_annots;
 my $dbnsfp_annot_ref = \%dbnsfp_annots;
-my @dbnsfp_keepcol = (14, 17, 18, 21..34, 37, 47, 48);
+my @dbnsfp_keepcol = (14, 17, 18, 21..34, 37, 47, 48);		# choose columns to keep from dbNSFP
 
+my $countSNPnogenosubj = 0;
 
 GetOptions(
 	'testvar=s' => \$testvarfile, 
@@ -63,7 +64,7 @@ close GENELISTVAR;
 
 # get header for dbNSFP annotations
 my $dbnsfp_headerline;
-my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b1_variant.chr1";
+my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b3_variant.chr1";
 if (-e "$dbnsfpfile.bz2") {
 	$dbnsfp_headerline = `bzcat $dbnsfpfile.bz2 | head -1`;
 } else {
@@ -168,10 +169,13 @@ while ( <FILE> ) {
 			print OUT "\t".(("\t") x scalar(@dbnsfp_keepcol))."\n";			
 		}
 		# END print output (combine genotypes with CGI gene annotations and dbNSFP annotations)
+	} else {
+		$countSNPnogenosubj++;
 	}
 }
 close FILE;
 close OUT;
+
 
 
 
@@ -183,7 +187,7 @@ sub loaddbNSFP {
 	
 	# prepare dbNSFP file for reading
 	my $dbnsfp_handle;
-	my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b1_variant.$desiredchr";
+	my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b3_variant.$desiredchr";
 	if (-e "$dbnsfpfile.bz2" || -e $dbnsfpfile) {
 		if (-e "$dbnsfpfile.bz2") {
 			open ($dbnsfp_handle, "bzcat $dbnsfpfile.bz2 |") or die "Cannot read $dbnsfpfile: $!\n";
@@ -205,7 +209,7 @@ sub loaddbNSFP {
 	return $dbnsfp_annot_ref;
 }
 
-
+print STDERR "There were $countSNPnogenosubj SNPs where no subject had a high-quality genotype\n";
 
 
 

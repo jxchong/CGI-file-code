@@ -1,11 +1,11 @@
 #!perl
 #
-# Description: Get all fully called, non-complex variants from a mastervar file matching a particular genotype
+# Description: Get all fully called, non-complex variants from a specified mastervar file matching a particular genotype class.
 # 	Can get variants within a given genomic coordinate or throughout the entire genome
 #
 #
 #
-# Created by Jessica on 2012-03-26
+# Created by Jessica X Chong on 2012-03-26
 
 use strict;
 use warnings;
