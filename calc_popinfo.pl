@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Long;
 
 
-my ($testvarfile, $outputfile, $geneannotationlistvar, %geneannotations, $dbnsfp_folder);
+my ($testvarfile, $outputfile, $geneannotationlistvar, %geneannotations, $dbnsfpfile);
 my %dbnsfp_annots;
 my $dbnsfp_annot_ref = \%dbnsfp_annots;
 my @dbnsfp_keepcol = (14, 17, 18, 21..34, 37, 47, 48);		# choose columns to keep from dbNSFP
@@ -22,7 +22,7 @@ GetOptions(
 	'testvar=s' => \$testvarfile, 
 	'o=s' => \$outputfile,
 	'genelistvar=s' => \$geneannotationlistvar,
-	'dbnsfp=s' => \$dbnsfp_folder,
+	'dbnsfp=s' => \$dbnsfpfile,
 );
 
 if (!defined $testvarfile) {
@@ -31,9 +31,9 @@ if (!defined $testvarfile) {
 	optionUsage("option --genelistvar not defined\n");
 }	elsif (!defined $outputfile) {
 	optionUsage("option --o not defined\n");
-} elsif (!defined $dbnsfp_folder) {
-	optionUsage("option --dbnsfp folder not defined\n");
-}
+} elsif (!defined $dbnsfpfile) {
+	optionUsage("option --dbnsfp file not defined\n");
+} 
 
 if (! -e $testvarfile) { 
 	die "$testvarfile does not exist\n";
@@ -41,12 +41,13 @@ if (! -e $testvarfile) {
 if (! -e $geneannotationlistvar) {
 	die "$geneannotationlistvar does not exist\n";
 }
-if (! -e $dbnsfp_folder) {
-	die "$dbnsfp_folder does not exist\n";
+if (! -e $dbnsfpfile) {
+	die "$dbnsfpfile does not exist\n";
 }
 
 
-# load in gene annotations from files
+
+# load in gene annotations from file
 print STDERR "Preloading gene annotations from $geneannotationlistvar\n";
 if ($geneannotationlistvar =~ /.bz2$/) {
 	open (GENELISTVAR, "bzcat $geneannotationlistvar |") or die "Cannot read $geneannotationlistvar: $!\n";
@@ -61,19 +62,24 @@ while (<GENELISTVAR>) {
 close GENELISTVAR;
 
 
+
 # get header for dbNSFP annotations
 my $dbnsfp_headerline;
-my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b3_variant.chr1";
-if (-e "$dbnsfpfile.bz2") {
-	$dbnsfp_headerline = `bzcat $dbnsfpfile.bz2 | head -1`;
+if ($dbnsfpfile =~ /.bz2$/) {
+	$dbnsfp_headerline = `bzcat $dbnsfpfile | head -1`;
 } else {
 	$dbnsfp_headerline = `head -1 $dbnsfpfile.tsv`;
 }	
 $dbnsfp_headerline =~ s/\s+$//;
 $dbnsfp_headerline =~ s/^#//;
 my @dbnsfp_header = split("\t", $dbnsfp_headerline);
+print STDERR "Reading dbNSFP from $dbnsfpfile\n";			
+%dbnsfp_annots = ();							
+$dbnsfp_annot_ref = loaddbNSFP($dbnsfp_annot_ref, \@dbnsfp_keepcol, $dbnsfpfile);
 
 
+
+print STDERR "Annotating and calculating\n";		
 
 open (OUT, ">$outputfile");
 print OUT "chr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
@@ -87,25 +93,12 @@ my $header = <FILE>;
 $header =~ s/\s+$//;
 my @headerline = split("\t", $header);
 my @ASMids = @headerline[8..$#headerline];
-my $currchr = 'NA';
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
 	my ($thischr, $thisstart, $thisend) = @line[1..3];
 	my $vartype = $line[4];
 	my ($ref, $alleleSeq) = @line[5..6];
-
-	# if ($thischr eq 'chr1' && $thisstart > 23974) {				 # DEBUG
-	# 	exit;
-	# }
-
-	if ($thischr ne $currchr) {
-		print STDERR "Reading dbNSFP for $thischr\n";			
-		$currchr = $thischr;
-		%dbnsfp_annots = ();							# clear out previous chromosome's annotations
-		$dbnsfp_annot_ref = loaddbNSFP($dbnsfp_annot_ref, $thischr, \@dbnsfp_keepcol, $dbnsfp_folder);
-		print STDERR "Working on $thischr\n";		
-	}
 
 	my $thiscoord = join('_', @line[1..6]);
 	
@@ -180,13 +173,11 @@ close OUT;
 
 sub loaddbNSFP {
 	my $dbnsfp_annot_ref = $_[0];
-	my $desiredchr = $_[1];
-	my $dbnsfp_keepcol_ref = $_[2];
-	my $dbnsfp_folder = $_[3];
+	my $dbnsfp_keepcol_ref = $_[1];
+	my $dbnsfpfile = $_[2];
 	
 	# prepare dbNSFP file for reading
 	my $dbnsfp_handle;
-	my $dbnsfpfile = "$dbnsfp_folder/dbNSFP2.0b3_variant.$desiredchr";
 	if (-e "$dbnsfpfile.bz2" || -e $dbnsfpfile) {
 		if (-e "$dbnsfpfile.bz2") {
 			open ($dbnsfp_handle, "bzcat $dbnsfpfile.bz2 |") or die "Cannot read $dbnsfpfile: $!\n";

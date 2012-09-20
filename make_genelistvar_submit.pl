@@ -41,7 +41,6 @@ while ( <FILE> ) {
 }
 close FILE;
 print OUT "--Output_Dir /clustb/jxchong/CGI_WGS --Output_File all.2012-09-20.genelistvar.tsv\n\n";
-print OUT "bzip2 /clustb/jxchong/CGI_WGS/all.2012-09-20.genelistvar.tsv\n";
 print OUT "cp /clustb/jxchong/CGI_WGS/all.2012-09-20.genelistvar.tsv.bz2 /clusta/jxchong/CGI_WGS/all.2012-09-20.genelistvar.tsv.bz2\n";
 close OUT;
 
