@@ -36,12 +36,12 @@ my %desiredvariants;
 open (FILE, "$inputfile") or die "Cannot read $inputfile file.\n";
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
-	my ($chr, $start, $stop) = split("\t", $_);
+	my ($chr, $start, $stop, $ref, ) = split("\t", $_);
 	if ($chr !~ 'chr') {
 		$chr = "chr$chr";
 	}
 	$start -= 1;
-	push(@{$desiredvariants{$chr}}, [$start, $stop]);
+	push(@{$desiredvariants{$chr}}, [$start, $stop, $ref]);
 
 	# my $thischrnum = $chr;
 	# $thischrnum =~ s/chr//;
@@ -69,7 +69,7 @@ my $currchr = 'NA';
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
-	my ($thischr, $thisstart, $thisend) = @line[0..2];
+	my ($thischr, $thisstart, $thisend, $thisref) = @line[0..3];
 	
 	if ($currchr ne $thischr) {
 		print STDERR "Reading chromosome $thischr\n";
@@ -84,8 +84,8 @@ while ( <FILE> ) {
 		next;
 	} else {
 		for (my $varnum=0; $varnum<=$#thischrvariants; $varnum++) {
-			my ($desiredstart, $desiredend) = @{$thischrvariants[$varnum]};
-			if ($thisstart >= $desiredstart && $thisend <= $desiredend) {
+			my ($desiredstart, $desiredend, $desiredref) = @{$thischrvariants[$varnum]};
+			if ($thisstart >= $desiredstart && $thisend <= $desiredend && $thisref eq $desiredref) {
 				print OUT "$thischr\t$thisstart\t$thisend";
 				for (my $i=3; $i<=$#line; $i++) {
 					print OUT "\t$line[$i]";

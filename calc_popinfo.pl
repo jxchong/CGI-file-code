@@ -9,7 +9,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use IO::Uncompress::Bunzip2 qw(bunzip2 $Bunzip2Error);
 
 
 my ($testvarfile, $outputfile, $geneannotationlistvar, %geneannotations, $dbnsfp_folder);
