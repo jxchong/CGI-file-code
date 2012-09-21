@@ -64,6 +64,7 @@ close GENELISTVAR;
 
 
 # get header for dbNSFP annotations
+# note that dbNSFP is 1-based not 0-based like CGI data
 my $dbnsfp_headerline;
 if ($dbnsfpfile =~ /.bz2$/) {
 	$dbnsfp_headerline = `bzcat $dbnsfpfile | head -1`;
@@ -207,11 +208,7 @@ sub loadGeneAnnot {
 	my ($string, $geneannot_ref) = @_;
 	my @line = split ("\t", $_);
 	my ($thischr, $thisstart, $thisend) = @line[0..2];
-	
-	# if ($thischr eq 'chr1' && $thisstart > 23974) {				 # DEBUG
-	# 	last;
-	# }
-	
+
 	my $lookup = join('_', @line[0..5]);
 	
 	# 0 chromosome	begin	end	varType	reference	call	xRef
