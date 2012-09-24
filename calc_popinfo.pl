@@ -83,7 +83,7 @@ $dbnsfp_annot_ref = loaddbNSFP($dbnsfp_annot_ref, \@dbnsfp_keepcol, $dbnsfpfile)
 print STDERR "Annotating and calculating\n";		
 
 open (OUT, ">$outputfile");
-print OUT "chr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
+print OUT "variantId\tchr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
 print OUT "\t".join("\t", @dbnsfp_header[@dbnsfp_keepcol])."\n";
 if ($testvarfile =~ /.bz2$/) {
 	open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile: $!\n";
@@ -97,7 +97,7 @@ my @ASMids = @headerline[8..$#headerline];
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
-	my ($thischr, $thisstart, $thisend) = @line[1..3];
+	my ($thisvarnum, $thischr, $thisstart, $thisend) = @line[0..3];
 	my $vartype = $line[4];
 	my ($ref, $alleleSeq) = @line[5..6];
 
@@ -146,6 +146,7 @@ while ( <FILE> ) {
 		} 
 		
 		# print output (combine genotypes with CGI gene annotations and dbNSFP annotations)
+		print OUT "$thisvarnum\t";
 		for (my $i=1; $i<=7; $i++) {
 			if ($line[$i] ne "") {
 				print OUT "$line[$i]\t";
@@ -179,23 +180,21 @@ sub loaddbNSFP {
 	
 	# prepare dbNSFP file for reading
 	my $dbnsfp_handle;
-	if (-e "$dbnsfpfile.bz2" || -e $dbnsfpfile) {
-		if (-e "$dbnsfpfile.bz2") {
-			open ($dbnsfp_handle, "bzcat $dbnsfpfile.bz2 |") or die "Cannot read $dbnsfpfile: $!\n";
-		} else {
-			open ($dbnsfp_handle, "$dbnsfpfile") or die "Cannot read $dbnsfpfile: $!\n";
-		}
-		<$dbnsfp_handle>;				# skip header
-		while (<$dbnsfp_handle>) {
-			$_ =~ s/\s+$//;
-			my @line = split("\t", $_);
-			my ($thischr, $pos, $ref, $alt) = @line[0..3];
-			my $dbnsfp_lookup = join("_", ("chr$thischr", $pos, $ref, $alt));
-			# parse and save desired fields
-			${$dbnsfp_annot_ref}{$dbnsfp_lookup} = join("\t", @line[@{$dbnsfp_keepcol_ref}]);
-		}
-		close $dbnsfp_handle;
+	if (-e $dbnsfpfile) {
+		open ($dbnsfp_handle, "bzcat $dbnsfpfile |") or die "Cannot read $dbnsfpfile: $!\n";
+	} else {
+		open ($dbnsfp_handle, "$dbnsfpfile") or die "Cannot read $dbnsfpfile: $!\n";
 	}
+	<$dbnsfp_handle>;				# skip header
+	while (<$dbnsfp_handle>) {
+		$_ =~ s/\s+$//;
+		my @line = split("\t", $_);
+		my ($thischr, $pos, $ref, $alt) = @line[0..3];
+		my $dbnsfp_lookup = join("_", ("chr$thischr", $pos, $ref, $alt));
+		# parse and save desired fields
+		${$dbnsfp_annot_ref}{$dbnsfp_lookup} = join("\t", @line[@{$dbnsfp_keepcol_ref}]);
+	}
+	close $dbnsfp_handle;
 	
 	return $dbnsfp_annot_ref;
 }

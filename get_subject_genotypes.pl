@@ -62,7 +62,7 @@ close FILE;
 # my $desiredCGIid = $findiv2CGI{$desiredfindiv};
 
 open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
-print OUT "Chr\tStart\tStop\tFindiv\tGenotype\n";
+print OUT "variantId\tChr\tStart\tStop\tFindiv\tGenotype\n";
 open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile file: $!.\n";
 my $headerline = <FILE>;
 $headerline =~ s/\s+$//;					# Remove line endings
@@ -72,7 +72,7 @@ my $currchr = 'NA';
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
-	my ($thischr, $thisstart, $thisend) = @line[1..3];
+	my ($thisvarnum, $thischr, $thisstart, $thisend) = @line[0..3];
 	
 	if ($currchr ne $thischr) {
 		print STDERR "Reading chromosome $thischr\n";
@@ -83,7 +83,7 @@ while ( <FILE> ) {
 		next;
 	} elsif ($thischr eq $desiredchr && $thisstart >= $desiredstart && $thisend <= $desiredend) {
 		for (my $i=8; $i<=$#line; $i++) {
-			print OUT "$thischr\t$thisstart\t$thisend\t$CGI2findiv{$testvarIDs[$i]}\t$line[$i]\n";
+			print OUT "$thisvarnum\t$thischr\t$thisstart\t$thisend\t$CGI2findiv{$testvarIDs[$i]}\t$line[$i]\n";
 		}
 	} elsif ($thischr eq $desiredchr && $thisend > $desiredend) {
 		last;
