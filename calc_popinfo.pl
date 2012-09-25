@@ -192,7 +192,9 @@ sub loaddbNSFP {
 		my ($thischr, $pos, $ref, $alt) = @line[0..3];
 		my $dbnsfp_lookup = join("_", ("chr$thischr", $pos, $ref, $alt));
 		# parse and save desired fields
-		${$dbnsfp_annot_ref}{$dbnsfp_lookup} = join("\t", @line[@{$dbnsfp_keepcol_ref}]);
+		if (defined $line[0]) {
+			${$dbnsfp_annot_ref}{$dbnsfp_lookup} = join("\t", @line[@{$dbnsfp_keepcol_ref}]);
+		}
 	}
 	close $dbnsfp_handle;
 	

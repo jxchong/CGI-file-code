@@ -1,8 +1,7 @@
 #!perl
 #
-# Description:
+# Description: From a given testvar file, get all variants in a specific region and produce a PLINK-like output of genotypes
 #
-# Usage: perl untitled.pl
 #
 #
 # Created by Jessica Chong on 2012-06-11
@@ -62,7 +61,7 @@ close FILE;
 # my $desiredCGIid = $findiv2CGI{$desiredfindiv};
 
 open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
-print OUT "variantId\tChr\tStart\tStop\tFindiv\tGenotype\n";
+print OUT "variantId\tChr\tStart\tStop\tvarType\tref\talt\tFindiv\ta1\ta2\n";
 open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile file: $!.\n";
 my $headerline = <FILE>;
 $headerline =~ s/\s+$//;					# Remove line endings
@@ -73,6 +72,7 @@ while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
 	my ($thisvarnum, $thischr, $thisstart, $thisend) = @line[0..3];
+	my ($ref, $alt) = @line[5..6];
 	
 	if ($currchr ne $thischr) {
 		print STDERR "Reading chromosome $thischr\n";
@@ -83,7 +83,21 @@ while ( <FILE> ) {
 		next;
 	} elsif ($thischr eq $desiredchr && $thisstart >= $desiredstart && $thisend <= $desiredend) {
 		for (my $i=8; $i<=$#line; $i++) {
-			print OUT "$thisvarnum\t$thischr\t$thisstart\t$thisend\t$CGI2findiv{$testvarIDs[$i]}\t$line[$i]\n";
+			print OUT join("\t", @line[0..6])."\t$CGI2findiv{$testvarIDs[$i]}\t";
+			my $genotype = $line[$i];
+			my $formattedgeno;
+			if ($genotype eq '00') {
+				$formattedgeno = "$ref\t$ref";
+			} elsif ($genotype eq '01') {
+				$formattedgeno = "$ref\t$alt";
+			} elsif ($genotype eq '10') {
+				$formattedgeno = "$alt\t$ref";
+			} elsif ($genotype eq '11') {
+				$formattedgeno = "$alt\t$alt";
+			} elsif ($genotype eq 'NN') {
+				$formattedgeno = "N\tN";
+			}
+			print OUT "$formattedgeno\n";
 		}
 	} elsif ($thischr eq $desiredchr && $thisend > $desiredend) {
 		last;

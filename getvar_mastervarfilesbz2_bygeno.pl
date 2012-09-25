@@ -9,7 +9,6 @@
 
 use strict;
 use warnings;
-use IO::Uncompress::Bunzip2 qw(bunzip2 $Bunzip2Error);
 use Getopt::Long;
 
 
@@ -79,9 +78,7 @@ my %allowedzygosity = (
 my $currchr = 'NA';
 my @keepfields = (2..9, 18, 19, 25..28);
 open (OUT, ">$outputfile");
-# my $bzobj = new IO::Uncompress::Bunzip2 $mastervarfile or die "IO::Uncompress::Bunzip2 failed: $Bunzip2Error\n";
 open (BZ, "bzcat $mastervarfile |") or die "Cannot read mastervarfile $mastervarfile: $!\n";
-# while (<$bzobj>) {
 while (<BZ>) {	
 	my $nextline = $_;
 	if ($nextline =~ m/^#/ || $nextline =~ m/^\s*$/) {					# skip header lines
@@ -137,7 +134,6 @@ while (<BZ>) {
 	}
 }
 
-# $bzobj->close();
 close BZ;
 
 close OUT;
