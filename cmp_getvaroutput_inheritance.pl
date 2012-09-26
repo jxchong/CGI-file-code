@@ -63,9 +63,6 @@ for (my $i=0; $i<=$#files; $i++) {
 			${$varpresent{$lookup}}[$j] += 0;
 		}
 		$countvar++;
-		if ($line[0] eq 'chr5') {
-			last;
-		}
 	}
 	close FILE;	
 	print STDERR ".. checked $countvar variants\n";
@@ -85,9 +82,7 @@ while ( <FILE> ) {
 	my @line = split ("\t", $_);
 	# my $pos = $line[0].'_'.$line[1].'_'.$line[2];
 	my $lookup = join('_', @line[0..2,5]);
-	if ($line[0] eq 'chr5') {
-		last;
-	}
+
 	if (exists $varpresent{$lookup}) {
 		my $countmatches = 0;
 		for (my $i=0; $i<=$#files; $i++) {
