@@ -85,19 +85,18 @@ while ( <FILE> ) {
 		for (my $i=8; $i<=$#line; $i++) {
 			print OUT join("\t", @line[0..6])."\t$CGI2findiv{$testvarIDs[$i]}\t";
 			my $genotype = $line[$i];
-			my $formattedgeno;
-			if ($genotype eq '00') {
-				$formattedgeno = "$ref\t$ref";
-			} elsif ($genotype eq '01') {
-				$formattedgeno = "$ref\t$alt";
-			} elsif ($genotype eq '10') {
-				$formattedgeno = "$alt\t$ref";
-			} elsif ($genotype eq '11') {
-				$formattedgeno = "$alt\t$alt";
-			} elsif ($genotype eq 'NN') {
-				$formattedgeno = "N\tN";
+			my @genoalleles = split("", $line[$i]);
+			my @formattedgeno;
+			foreach my $allele (@genoalleles) {
+				if ($allele eq '0') {
+					push(@formattedgeno, $ref);
+				} elsif ($allele eq '1') {
+					push(@formattedgeno, $alt);
+				} elsif ($allele eq 'N') {
+					push(@formattedgeno, 'N');
+				} 
 			}
-			print OUT "$formattedgeno\n";
+			print OUT join("\t", @formattedgeno)."\n";
 		}
 	} elsif ($thischr eq $desiredchr && $thisend > $desiredend) {
 		last;

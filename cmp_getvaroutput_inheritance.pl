@@ -40,7 +40,9 @@ my @files;
 open (IN, "$inputfile");
 while (<IN>) {
 	$_ =~ s/\s+$//;
-	push(@files, $_);
+	if ($_ !~ '#') {
+		push(@files, $_);
+	}
 }
 close IN;
 
@@ -54,15 +56,19 @@ for (my $i=0; $i<=$#files; $i++) {
 	while ( <FILE> ) {
 		$_ =~ s/\s+$//;					# Remove line endings
 		my @line = split ("\t", $_);
-		my $pos = $line[0].'_'.$line[1].'_'.$line[2];
-		${$varpresent{$pos}}[$i] += 1;
+		# my $pos = $line[0].'_'.$line[1].'_'.$line[2];
+		my $lookup = join('_', @line[0..2,5]);
+		${$varpresent{$lookup}}[$i] += 1;
 		for (my $j=0; $j<=$#files; $j++) {
-			${$varpresent{$pos}}[$j] += 0;
+			${$varpresent{$lookup}}[$j] += 0;
 		}
 		$countvar++;
+		if ($line[0] eq 'chr5') {
+			last;
+		}
 	}
 	close FILE;	
-	print STDERR ".. found $countvar variants\n";
+	print STDERR ".. checked $countvar variants\n";
 }
 
 # while (my($pos,$countref) = each %varpresent) {
@@ -77,11 +83,15 @@ print OUT $header;
 while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
-	my $pos = $line[0].'_'.$line[1].'_'.$line[2];
-	if (exists $varpresent{$pos}) {
+	# my $pos = $line[0].'_'.$line[1].'_'.$line[2];
+	my $lookup = join('_', @line[0..2,5]);
+	if ($line[0] eq 'chr5') {
+		last;
+	}
+	if (exists $varpresent{$lookup}) {
 		my $countmatches = 0;
 		for (my $i=0; $i<=$#files; $i++) {
-			if (${$varpresent{$pos}}[$i] >= 1) {
+			if (${$varpresent{$lookup}}[$i] >= 1) {
 				$countmatches++;
 			}
 		}
