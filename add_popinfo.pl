@@ -59,7 +59,7 @@ while ( <FILE> ) {
 
 	my $freq = 'NA';
 	my @genotypes = (('NA') x 8);
-	my $thiscoord = join('_', @line[0..4]);
+	my $thiscoord = join('_', @line[0..2,4,5]);
 	my $thischr = $line[0];
 	
 	if ($currchr ne $thischr) {
@@ -71,25 +71,12 @@ while ( <FILE> ) {
 		# }
 	}
 	
-	if ($line[10]) {
-		my $xref = $line[10];
-		my @rsids = split(";", $xref);
-		foreach my $rsidstring (@rsids) {
-			my ($dbsnp, $rsid) = split(":", $rsidstring);
-			if (defined $allelefreqs{$rsid} && $freq eq 'NA') {
-				$freq = $allelefreqs{$rsid};
-			}
-			if (defined $genocounts{$rsid} && $genotypes[0] eq 'NA') {
-				@genotypes = @{$genocounts{$rsid}};
-			}
-		}
-	} else {
-		if (defined $allelefreqs{$thiscoord}) {
-			$freq = $allelefreqs{$thiscoord};
-		} 
-		if (defined $genocounts{$thiscoord}) {
-			@genotypes = @{$genocounts{$thiscoord}};
-		}
+
+	if (defined $allelefreqs{$thiscoord}) {
+		$freq = $allelefreqs{$thiscoord};
+	} 
+	if (defined $genocounts{$thiscoord}) {
+		@genotypes = @{$genocounts{$thiscoord}};
 	}
 	
 	print OUT "\t$freq\t".join("\t", @genotypes)."\n";
@@ -123,23 +110,9 @@ sub readPopInfo {
 	while (<FREQ>) {
 		$_ =~ s/\s+$//;
 		my @line = split("\t", $_);
-		my $snpname = 'NA';
-		if ($line[6]) {
-			my $xref = $line[6];
-			my @snpids = split(";", $xref);
-			foreach my $snpid (@snpids) {
-				my @rsids = split(":", $snpid);
-				if ($rsids[0] =~ m/dbsnp/i) {
-					$snpname = $rsids[1];
-				}
-			}
-			if ($snpname eq 'NA') {
-				$snpname = $line[7];
-			}
-		} else {
-			$snpname = $line[7];
-		}
 
+		my $snpname = join('_', @line[0..4]);
+		
 		$allelefreqs{$snpname} = $line[8];
 
 		my $geneannot = (("\t") x 11);
