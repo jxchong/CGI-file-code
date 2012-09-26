@@ -65,29 +65,29 @@ while ( <FILE> ) {
 	if ($currchr ne $thischr) {
 		$currchr = $thischr;
 		($allelefreqs_ref, $genocounts_ref) = readPopInfo($currchr, $popinfodir, $popinfoprefix, $allelefreqs_ref, $genocounts_ref);
-		print "Annotating variants on $currchr\n";
+		print STDERR "Annotating variants on $currchr\n";
 		# if ($thischr eq 'chr2') {			# DEBUG
 		# 	exit;
 		# }
 	}
 	
-	if ($line[9]) {
-		my $xref = $line[9];
+	if ($line[10]) {
+		my $xref = $line[10];
 		my @rsids = split(";", $xref);
 		foreach my $rsidstring (@rsids) {
 			my ($dbsnp, $rsid) = split(":", $rsidstring);
-			if (exists $allelefreqs{$rsid} && $freq eq 'NA') {
+			if (defined $allelefreqs{$rsid} && $freq eq 'NA') {
 				$freq = $allelefreqs{$rsid};
 			}
-			if (exists $genocounts{$rsid} && $genotypes[0] eq 'NA') {
+			if (defined $genocounts{$rsid} && $genotypes[0] eq 'NA') {
 				@genotypes = @{$genocounts{$rsid}};
 			}
 		}
 	} else {
-		if (exists $allelefreqs{$thiscoord}) {
+		if (defined $allelefreqs{$thiscoord}) {
 			$freq = $allelefreqs{$thiscoord};
 		} 
-		if (exists $genocounts{$thiscoord}) {
+		if (defined $genocounts{$thiscoord}) {
 			@genotypes = @{$genocounts{$thiscoord}};
 		}
 	}
