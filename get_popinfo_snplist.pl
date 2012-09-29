@@ -12,18 +12,23 @@ use warnings;
 use Getopt::Long;
 
 
-my ($popinfofile, $inputfile, $outputfile);
+my ($popinfodir, $popinfofilenames, $inputfile, $outputfile);
+
+
 
 GetOptions(
-	'popinfo=s' => \$popinfofile, 
+	'popinfodir=s' => \$popinfodir, 
+	'popinfofilenames=s' => \$popinfofilenames, 
 	'in=s' => \$inputfile,
 	'out=s' => \$outputfile,
 );
 
+if (!$popinfofilenames) {
+	$popinfofilenames = 'all.2012-09-20.popinfo.thischr.tsv';
+}
 
-
-if (!defined $popinfofile) {
-	optionUsage("option --popinfo not defined\n");
+if (!defined $popinfodir) {
+	optionUsage("option --popinfodir not defined\n");
 } elsif (!defined $outputfile) {
 	optionUsage("option --out not defined\n");
 } elsif (!defined $inputfile) {
@@ -33,72 +38,89 @@ if (!defined $popinfofile) {
 
 # my $highestchr;
 my %desiredvariants;
-open (FILE, "$inputfile") or die "Cannot read $inputfile file.\n";
-while ( <FILE> ) {
+open (INPUT, "$inputfile") or die "Cannot read $inputfile file.\n";
+while ( <INPUT> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
-	my ($chr, $start, $stop, $ref, ) = split("\t", $_);
-	if ($chr !~ 'chr') {
-		$chr = "chr$chr";
+	my ($chr, $start, $stop) = split("\t", $_);
+	if ($chr =~ 'chr') {
+		$chr =~ s/chr//;
 	}
+	$start =~ s/,//g;
 	$start -= 1;
-	push(@{$desiredvariants{$chr}}, [$start, $stop, $ref]);
-
-	# my $thischrnum = $chr;
-	# $thischrnum =~ s/chr//;
-	# if ($thischrnum > $highestchr) {
-	# 	$highestchr = $thischrnum;
-	# }
+	$stop =~ s/,//g;
+	push(@{$desiredvariants{$chr}}, [$start, $stop]);
 }
-close FILE;
+close INPUT;
 
 
 
-
-
-
+my $isFirstVariant = 1;
 open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
-open (FILE, "bzcat $popinfofile |") or die "Cannot read $popinfofile file: $!.\n";
-my $headerline = <FILE>;
-$headerline =~ s/\s+$//;					# Remove line endings
-my @header = split("\t", $headerline);
-my @popinfoIDs = split("\t", $headerline);
-my @thischrvariants;
 
-print OUT join("\t", @header)."\n";
-my $currchr = 'NA';
-while ( <FILE> ) {
-	$_ =~ s/\s+$//;					# Remove line endings
-	my @line = split ("\t", $_);
-	my ($thischr, $thisstart, $thisend, $thisref) = @line[0..3];
+# iterate over each chromosome to fetch variants from each coordinate region
+foreach my $chrnum (sort { $a <=> $b} keys %desiredvariants) {
+	my $chrname = $chrnum;
+	if ($chrname !~ 'chr') {
+ 		$chrname = "chr$chrnum";
+ 	}
+	my @targetcoords = @{$desiredvariants{$chrnum}};
+	# to improve efficiency, get start position of first target region and end position of last target region
+	my @sortedcoords = sort { $a->[0] <=> $b->[0] } @targetcoords;
+	my $firstpos = $sortedcoords[0]->[0];
+	my $lastpos = $sortedcoords[$#sortedcoords]->[1];
 	
-	if ($currchr ne $thischr) {
-		print STDERR "Reading chromosome $thischr\n";
-		$currchr = $thischr;
-		if (exists $desiredvariants{$thischr}) {
-			@thischrvariants = @{$desiredvariants{$thischr}};
-			print STDERR "There are ".scalar(@thischrvariants)." desired variants on $currchr\n";			
-		}
-	}
-	
-	if (!exists $desiredvariants{$thischr}) {
-		next;
+	# open corresponding popinfo file for this chromosome
+	my $popinfofile = $popinfofilenames;
+	$popinfofile =~ s/thischr/$chrname/;
+	if ("$popinfodir/$popinfofile" =~ /.bz2/) {
+		open (POPINFOFILE, "bzcat $popinfodir/$popinfofile |") or die "Cannot read popinfo from $popinfodir/$popinfofile: $!\n";
 	} else {
-		for (my $varnum=0; $varnum<=$#thischrvariants; $varnum++) {
-			my ($desiredstart, $desiredend, $desiredref) = @{$thischrvariants[$varnum]};
-			if ($thisstart >= $desiredstart && $thisend <= $desiredend && $thisref eq $desiredref) {
-				print OUT "$thischr\t$thisstart\t$thisend";
-				for (my $i=3; $i<=$#line; $i++) {
-					print OUT "\t$line[$i]";
+		open (POPINFOFILE, "$popinfodir/$popinfofile") or die "Cannot read popinfo from $popinfodir/$popinfofile: $!\n";
+	}
+
+	print STDERR "Fetching variants from chromosome $chrnum\n";	
+	my $headerline = <POPINFOFILE>;
+	$headerline =~ s/\s+$//;					# Remove line endings
+	my @popinfoIDs = split("\t", $headerline);
+	
+	if ($isFirstVariant == 1) {
+		my @header = split("\t", $headerline);
+		print OUT join("\t", @header)."\n";
+		$isFirstVariant = 0;
+	}
+
+	# read popinfo file line by line and check if variants are within your targetted regions
+	my $matchedvariants = 0;
+	while ( <POPINFOFILE> ) {
+		$_ =~ s/\s+$//;
+		my @line = split ("\t", $_);
+		my ($thischr, $thisstart, $thisend) = @line[0..2];
+		
+		# skip lines that aren't in any of the targetted regions
+		if ($thisstart < $firstpos) {
+			next;
+		} elsif ($thisend > $lastpos) {
+			last;
+		} else {
+			# check if variant is within one of the targetted regions
+			for (my $varnum=0; $varnum<=$#targetcoords; $varnum++) {
+				my ($desiredstart, $desiredend, $desiredref) = @{$targetcoords[$varnum]};
+				if ($thisstart >= $desiredstart && $thisend <= $desiredend) {
+					$matchedvariants++;
+					print OUT "$thischr\t$thisstart\t$thisend";
+					for (my $i=3; $i<=$#line; $i++) {
+						print OUT "\t$line[$i]";
+					}
+					print OUT "\n";
 				}
-				print OUT "\n";
 			}
 		}
-		
-	} 
-	
-	
+	}
+	close POPINFOFILE;
+
+	print STDERR "Found $matchedvariants variants within desired coordinates on chromosome $chrnum\n";			
 }
-close FILE;
+
 close OUT;
 
 

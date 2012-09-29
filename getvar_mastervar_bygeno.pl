@@ -2,6 +2,7 @@
 #
 # Description: Get all fully called, non-complex variants from a specified mastervar file matching a particular genotype class.
 # 	Can get variants within a given genomic coordinate or throughout the entire genome
+#	Haven't really determined what happens at positions where there are two different variants/alleles
 #
 #
 #
@@ -87,7 +88,11 @@ my %allowedzygosity = (
 my $currchr = 'NA';
 my @keepfields = (2..9, 14, 15, 18, 19, 25..28);
 open (OUT, ">$outputfile");
-open (BZ, "bzcat $mastervarfile |") or die "Cannot read mastervarfile $mastervarfile: $!\n";
+if ($mastervarfile =~ /.bz2/) {
+	open (BZ, "bzcat $mastervarfile |") or die "Cannot read mastervarfile $mastervarfile: $!\n";
+} else {
+	open (BZ, "$mastervarfile") or die "Cannot read mastervarfile $mastervarfile: $!\n";
+}
 while (<BZ>) {	
 	my $nextline = $_;
 	if ($nextline =~ m/^#/ || $nextline =~ m/^\s*$/) {					# skip header lines
@@ -111,6 +116,16 @@ while (<BZ>) {
 			}
 			print STDERR "\n";
 		}
+
+		# if ($thischr eq 'chr2') {			# DEBUG
+		# 	exit;
+		# }
+		
+		if ($desiredqual eq 'VQHIGH' && ($a1quality && $a2quality)) {
+			if ($a1quality ne 'VQHIGH' || $a2quality ne 'VQHIGH') {
+				next;
+			}
+		}
 		
 		if (defined $targetchr && defined $targetstart && defined $targetend) {
 			my $thischrnum = $thischr;
@@ -118,12 +133,6 @@ while (<BZ>) {
 
 			if ($thischrnum > $targetchrnum || (($thischr eq $targetchr ) && ($thisend > $targetend))) {
 				last;
-			}
-			
-			if ($desiredqual eq 'VQHIGH') {
-				if ($a1quality ne 'VQHIGH' || $a2quality ne 'VQHIGH') {
-					next;
-				}
 			}
 			
 			if ($thischr eq $targetchr && $thisstart>=$targetstart && $thisend<=$targetend) {
