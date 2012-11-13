@@ -105,21 +105,26 @@ while ( <FILE> ) {
 	
 	my @genotypes = @line[8..$#line];
 	my @genocounts = (0,0,0,0);
-	foreach my $geno (@genotypes) {
-		if ($thischr =~ 'chrX') {
-			if ($geno eq '00')  { $genocounts[0]++; }
-			if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
-			if ($geno eq '11')  { $genocounts[2]++; }			
-			if ($geno =~ 'N')  { $genocounts[3]++; }
-		} elsif ($thischr =~ 'chrM' || $thischr =~ 'chrY') {
-			if ($geno eq '0')  { $genocounts[0]++; }
-			if ($geno eq '1' || $geno eq '10')  { $genocounts[1]++; }
-			if ($geno =~ 'N')  { $genocounts[3]++; }
+	for (my $subjidx=0; $subjidx<=$#genotypes; $subjidx++) {
+		if ($subjidx == 4 || $subjidx == 78) {								# exclude affected individuals (will throw of MAF calculations)
+			next;
 		} else {
-			if ($geno eq '00')  { $genocounts[0]++; }
-			if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
-			if ($geno eq '11')  { $genocounts[2]++; }
-			if ($geno =~ 'N')  { $genocounts[3]++; }
+			my $geno = $genotypes[$subjidx];
+			if ($thischr =~ 'chrX') {
+				if ($geno eq '00')  { $genocounts[0]++; }
+				if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
+				if ($geno eq '11')  { $genocounts[2]++; }			
+				if ($geno =~ 'N')  { $genocounts[3]++; }
+			} elsif ($thischr =~ 'chrM' || $thischr =~ 'chrY') {
+				if ($geno eq '0')  { $genocounts[0]++; }
+				if ($geno eq '1' || $geno eq '10')  { $genocounts[1]++; }
+				if ($geno =~ 'N')  { $genocounts[3]++; }
+			} else {
+				if ($geno eq '00')  { $genocounts[0]++; }
+				if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
+				if ($geno eq '11')  { $genocounts[2]++; }
+				if ($geno =~ 'N')  { $genocounts[3]++; }
+			}
 		}
 	}
 	
