@@ -48,7 +48,7 @@ if (! -e $dbnsfpfile) {
 
 
 # load in gene annotations from file
-print STDERR "Preloading gene annotations from $geneannotationlistvar\n";
+print "Preloading gene annotations from $geneannotationlistvar\n";
 if ($geneannotationlistvar =~ /.bz2$/) {
 	open (GENELISTVAR, "bzcat $geneannotationlistvar |") or die "Cannot read $geneannotationlistvar: $!\n";
 } else {
@@ -74,13 +74,13 @@ if ($dbnsfpfile =~ /.bz2$/) {
 $dbnsfp_headerline =~ s/\s+$//;
 $dbnsfp_headerline =~ s/^#//;
 my @dbnsfp_header = split("\t", $dbnsfp_headerline);
-print STDERR "Reading dbNSFP from $dbnsfpfile\n";			
+print "Reading dbNSFP from $dbnsfpfile\n";			
 %dbnsfp_annots = ();							
 $dbnsfp_annot_ref = loaddbNSFP($dbnsfp_annot_ref, \@dbnsfp_keepcol, $dbnsfpfile);
 
 
 
-print STDERR "Annotating and calculating\n";		
+print "Annotating and calculating\n";		
 
 open (OUT, ">$outputfile");
 print OUT "variantId\tchr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
@@ -207,7 +207,7 @@ sub loaddbNSFP {
 	return $dbnsfp_annot_ref;
 }
 
-print STDERR "There were $countSNPnogenosubj SNPs where no subject had a high-quality genotype\n";
+print "There were $countSNPnogenosubj SNPs where no subject had a high-quality genotype\n";
 
 
 
