@@ -106,7 +106,7 @@ while ( <FILE> ) {
 	my @genotypes = @line[8..$#line];
 	my @genocounts = (0,0,0,0);
 	for (my $subjidx=0; $subjidx<=$#genotypes; $subjidx++) {
-		if ($subjidx == 4 || $subjidx == 78) {								# exclude affected individuals (will throw of MAF calculations)
+		if ($subjidx+1 == 4 || $subjidx+1 == 78) {								# exclude affected individuals (will throw of MAF calculations)
 			next;
 		} else {
 			my $geno = $genotypes[$subjidx];
