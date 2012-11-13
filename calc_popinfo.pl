@@ -98,6 +98,7 @@ while ( <FILE> ) {
 	$_ =~ s/\s+$//;					# Remove line endings
 	my @line = split ("\t", $_);
 	my ($thisvarnum, $thischr, $thisstart, $thisend) = @line[0..3];
+	$line[1] =~ s/chr//;														# make chromosome IDs just the number instead of "chr1", make it just "1" to make files more compatible with tabix
 	my $vartype = $line[4];
 	my ($ref, $alleleSeq) = @line[5..6];
 
