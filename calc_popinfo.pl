@@ -83,7 +83,7 @@ $dbnsfp_annot_ref = loaddbNSFP($dbnsfp_annot_ref, \@dbnsfp_keepcol, $dbnsfpfile)
 print "Annotating and calculating\n";		
 
 open (OUT, ">$outputfile");
-print OUT "variantId\tchr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
+print OUT "chr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet\tnhomalt\tnmiss\tnhommaj\tnhommin\tCR\tgenesymbol\torientation\tcomponent\tcomponentIndex\thasCodingRegion\timpact\tnucleotidePos\tproteinPos\tannotationRefSequence\tsampleSequence\tgenomeRefSequence";
 print OUT "\t".join("\t", @dbnsfp_header[@dbnsfp_keepcol])."\n";
 if ($testvarfile =~ /.bz2$/) {
 	open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile: $!\n";
@@ -104,28 +104,26 @@ while ( <FILE> ) {
 
 	my $thiscoord = join('_', @line[1..6]);
 	
-	my @genotypes = @line[8..$#line];
+	my @origgenotypes = @line[8..$#line];
+	my @genotypes = @origgenotypes[0..2,4..76,78..$#origgenotypes];				# exclude affected individuals (will throw off MAF calculations)
+	
 	my @genocounts = (0,0,0,0);
 	for (my $subjidx=0; $subjidx<=$#genotypes; $subjidx++) {
-		if ($subjidx+1 == 4 || $subjidx+1 == 78) {								# exclude affected individuals (will throw of MAF calculations)
-			next;
+		my $geno = $genotypes[$subjidx];
+		if ($thischr =~ 'chrX') {
+			if ($geno eq '00')  { $genocounts[0]++; }
+			if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
+			if ($geno eq '11')  { $genocounts[2]++; }			
+			if ($geno =~ 'N')  { $genocounts[3]++; }
+		} elsif ($thischr =~ 'chrM' || $thischr =~ 'chrY') {
+			if ($geno eq '0')  { $genocounts[0]++; }
+			if ($geno eq '1' || $geno eq '10')  { $genocounts[1]++; }
+			if ($geno =~ 'N')  { $genocounts[3]++; }
 		} else {
-			my $geno = $genotypes[$subjidx];
-			if ($thischr =~ 'chrX') {
-				if ($geno eq '00')  { $genocounts[0]++; }
-				if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
-				if ($geno eq '11')  { $genocounts[2]++; }			
-				if ($geno =~ 'N')  { $genocounts[3]++; }
-			} elsif ($thischr =~ 'chrM' || $thischr =~ 'chrY') {
-				if ($geno eq '0')  { $genocounts[0]++; }
-				if ($geno eq '1' || $geno eq '10')  { $genocounts[1]++; }
-				if ($geno =~ 'N')  { $genocounts[3]++; }
-			} else {
-				if ($geno eq '00')  { $genocounts[0]++; }
-				if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
-				if ($geno eq '11')  { $genocounts[2]++; }
-				if ($geno =~ 'N')  { $genocounts[3]++; }
-			}
+			if ($geno eq '00')  { $genocounts[0]++; }
+			if ($geno eq '01' || $geno eq '10')  { $genocounts[1]++; }
+			if ($geno eq '11')  { $genocounts[2]++; }
+			if ($geno =~ 'N')  { $genocounts[3]++; }
 		}
 	}
 	
@@ -152,7 +150,7 @@ while ( <FILE> ) {
 		} 
 		
 		# print output (combine genotypes with CGI gene annotations and dbNSFP annotations)
-		print OUT "$thisvarnum\t";
+		# print OUT "$thisvarnum\t";
 		for (my $i=1; $i<=7; $i++) {
 			if ($line[$i] ne "") {
 				print OUT "$line[$i]\t";
