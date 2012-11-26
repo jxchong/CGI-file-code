@@ -5,10 +5,10 @@ General information:
 
 To generate popinfo file:
 
-1.   sub_listtestvar.sh (example submission script):  
+1.   sub_listtestvar.sh (example submission script)
 	1.  Use cgatools listvariants to generate file with all variants in the genomes in question (I limited it to VQHIGH variants only but this is optional).
  	2.  Use cgatools testvariants to generate file with "genotypes" (test for presence of a given variant in each genome).
-2.   sub_genelistvar.sh (example submission script):
+2.   sub_genelistvar.sh (example submission script)
 	1.  Use CGI's unofficial Generate_Gene_ListVariants_From_Gene_File_0_1_4 to get gene-based annotations for variants.  Unfortunately cgatools testvariants and listvariants don't retain the gene-based annotation information!!!
 3.   Run split_by_chr.pl to split the files generated in steps 1 and 2 by chromosome (for faster processing/batching)
 4.   runsub_popinfo.sh (example submission script): Generate popinfo file
