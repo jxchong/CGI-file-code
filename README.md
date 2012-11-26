@@ -1,7 +1,7 @@
 General information:
 *   popinfo file contains population info such as: MAF; alternate allele freq; genotype counts; call rate; gene-based annotations via CGI (if it's in a gene, what the gene name is, what part of the gene; if it's a coding variant, whether it's missense, nonsense, stopgain, stoploss, splicing; what exon or intron it's in; which # amino acid is affected
 *   all numbers based on genomic coordinates (such as the exon number affected by a given variant, or the variant's position) are 0-based not 1-based, i.e. counting starts from exon 0
-*   popinfo file integrates annotations such as SIFT and GERP scores from dbNSFP but dbNSFP is not necessary
+*   popinfo file integrates annotations such as SIFT and GERP scores from dbNSFP but dbNSFP is not necessary.  dbNSFP (the most recent iteration I used was 2.0b3) seemed to be missing scores for some SNVs that ought to have SIFT/GERP scores; not sure wh
 
 To generate popinfo file:
 
