@@ -49,8 +49,8 @@ if (! -e $dbnsfpfile) {
 
 # load in gene annotations from file
 print "Preloading gene annotations from $geneannotationlistvar\n";
-if ($geneannotationlistvar =~ /.bz2$/) {
-	open (GENELISTVAR, "bzcat $geneannotationlistvar |") or die "Cannot read $geneannotationlistvar: $!\n";
+if ($geneannotationlistvar =~ /.gz$/) {
+	open (GENELISTVAR, "zcat $geneannotationlistvar |") or die "Cannot read $geneannotationlistvar: $!\n";
 } else {
 	open (GENELISTVAR, "$geneannotationlistvar") or die "Cannot read $geneannotationlistvar: $!\n";
 }
