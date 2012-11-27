@@ -35,6 +35,8 @@ my $currchr = 0;
 
 if ($inputfile =~ /.bz2$/) {
 	open (FILE, "bzcat $inputfile |") or die "Cannot read $inputfile: $!\n";
+} elsif ($inputfile =~ /.gz$/) {
+	open (FILE, "zcat $inputfile |") or die "Cannot read $inputfile: $!\n";
 } else {
 	open (FILE, "$inputfile") or die "Cannot read $inputfile: $!\n";
 }
@@ -66,7 +68,7 @@ close FILE;
 print STDERR "Compressing files\n";
 
 foreach my $filename (@filenames) {
-	`bzip2 $filename`;
+	`~/bin/bgzip $filename`;
 }
 
 
