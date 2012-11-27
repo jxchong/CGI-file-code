@@ -87,6 +87,8 @@ print OUT "chr\tbegin\tend\tvartype\tref\talt\txref\taltfreq\tMAF\tnhomref\tnhet
 print OUT "\t".join("\t", @dbnsfp_header[@dbnsfp_keepcol])."\n";
 if ($testvarfile =~ /.bz2$/) {
 	open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile: $!\n";
+} elsif ($testvarfile =~ /.gz/) {
+	open (FILE, "zcat $testvarfile |") or die "Cannot read $testvarfile: $!\n";
 } else {
 	open (FILE, "$testvarfile") or die "Cannot read $testvarfile: $!\n";
 }
@@ -105,7 +107,7 @@ while ( <FILE> ) {
 	my $thiscoord = join('_', @line[1..6]);
 	
 	my @origgenotypes = @line[8..$#line];
-	my @genotypes = @origgenotypes[0..2,4..76,78..$#origgenotypes];				# exclude affected individuals (will throw off MAF calculations)
+	my @genotypes = @origgenotypes[0..2,4..76,78..$#origgenotypes];				# exclude 2 affected individuals (will throw off MAF calculations for Hutterite population frequency)
 	
 	my @genocounts = (0,0,0,0);
 	for (my $subjidx=0; $subjidx<=$#genotypes; $subjidx++) {
