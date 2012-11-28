@@ -22,10 +22,6 @@ GetOptions(
 	'out=s' => \$outputfile,
 );
 
-my $popinfofile = $popinfodir;
-$popinfofile =~ s/popinfo-/all./;
-$popinfofile = "$popinfofile.popinfo.tsv.gz";
-
 
 if (!defined $popinfodir) {
 	optionUsage("option --popinfodir not defined\n");
@@ -34,6 +30,11 @@ if (!defined $popinfodir) {
 } elsif (!defined $inputfile) {
 	optionUsage("options --in not defined\n");
 }
+
+$popinfofile = $popinfodir;
+$popinfofile =~ s/popinfo-/all./;
+$popinfofile = "$popinfofile.popinfo.tsv.gz";
+
 
 
 print STDOUT "Note: These results (genotype counts and frequencies) use data from only 96 Hutterite genomes (not from 98) because including 2 affected children biases the MAF calculations\n\n";
