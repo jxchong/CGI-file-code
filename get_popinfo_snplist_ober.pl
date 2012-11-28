@@ -33,7 +33,7 @@ if (-d "/ober_resources/CGI_98Hutterites_WGS/popinfo-2012-11-12") {
 	die;
 }
 
-$popinfofilenames = 'all.2012-11-12.popinfo.gz';
+$popinfofilenames = 'all.2012-11-12.popinfo.tsv.gz';
 
 
 if (!defined $outputfile) {
