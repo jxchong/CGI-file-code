@@ -62,7 +62,7 @@ close FILE;
 
 open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
 print OUT "variantId\tChr\tStart\tStop\tvarType\tref\talt\tFindiv\ta1\ta2\n";
-open (FILE, "bzcat $testvarfile |") or die "Cannot read $testvarfile file: $!.\n";
+open (FILE, "zcat $testvarfile |") or die "Cannot read $testvarfile file: $!.\n";
 my $headerline = <FILE>;
 $headerline =~ s/\s+$//;					# Remove line endings
 my @testvarIDs = split("\t", $headerline);
