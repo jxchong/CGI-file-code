@@ -60,49 +60,57 @@ close FILE;
 
 # my $desiredCGIid = $findiv2CGI{$desiredfindiv};
 
-open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
-print OUT "variantId\tChr\tStart\tStop\tvarType\tref\talt\tFindiv\ta1\ta2\n";
+
 open (FILE, "zcat $testvarfile |") or die "Cannot read $testvarfile file: $!.\n";
 my $headerline = <FILE>;
 $headerline =~ s/\s+$//;					# Remove line endings
 my @testvarIDs = split("\t", $headerline);
+close FILE;
 
-my $currchr = 'NA';
-while ( <FILE> ) {
-	$_ =~ s/\s+$//;					# Remove line endings
-	my @line = split ("\t", $_);
+open (OUT, ">$outputfile") or die "Cannot write to $outputfile: $!.\n";
+print OUT "variantId\tChr\tStart\tStop\tvarType\tref\talt\tFindiv\ta1\ta2\n";
+my @variants = `tabix $testvarfile $desiredchr:$desiredstart-$desiredend`;
+foreach my $variant (@variants) {
+	$variant =~ s/\s+$//;					# Remove line endings
+	my @line = split("\t", $variant);
 	my ($thisvarnum, $thischr, $thisstart, $thisend) = @line[0..3];
 	my ($ref, $alt) = @line[5..6];
-	
-	if ($currchr ne $thischr) {
-		print STDERR "Reading chromosome $thischr\n";
-		$currchr = $thischr;
+	if ($line[4] eq 'ins') {
+		$ref = "ref";
+		$alt = "ins$alt";
 	}
-	
-	if ($thischr ne $desiredchr) {
-		next;
-	} elsif ($thischr eq $desiredchr && $thisstart >= $desiredstart && $thisend <= $desiredend) {
-		for (my $i=8; $i<=$#line; $i++) {
-			print OUT join("\t", @line[0..6])."\t$CGI2findiv{$testvarIDs[$i]}\t";
-			my $genotype = $line[$i];
-			my @genoalleles = split("", $line[$i]);
-			my @formattedgeno;
-			foreach my $allele (@genoalleles) {
-				if ($allele eq '0') {
-					push(@formattedgeno, $ref);
-				} elsif ($allele eq '1') {
-					push(@formattedgeno, $alt);
-				} elsif ($allele eq 'N') {
-					push(@formattedgeno, 'N');
-				} 
-			}
-			print OUT join("\t", @formattedgeno)."\n";
+	if ($line[4] eq 'del') {
+		$alt = "del$ref";
+	}
+	for (my $i=8; $i<=$#line; $i++) {
+		print OUT join("\t", @line[0..4]);
+		print OUT "\t$ref\t$alt";
+		# if ($line[5] !~ /^$/) {								# insertions have a blank space for the ref allele
+		# 	print OUT "\t$line[5]";
+		# } else {
+		# 	print OUT "\tref";
+		# }
+		# if ($line[6] !~ /^$/) {
+		# 	print OUT "\t$line[6]";
+		# } else {
+		# 	print OUT "\t";
+		# }
+		print OUT "\t$CGI2findiv{$testvarIDs[$i]}\t";
+		my $genotype = $line[$i];
+		my @genoalleles = split("", $line[$i]);
+		my @formattedgeno;
+		foreach my $allele (@genoalleles) {
+			if ($allele eq '0') {
+				push(@formattedgeno, $ref);
+			} elsif ($allele eq '1') {
+				push(@formattedgeno, $alt);
+			} elsif ($allele eq 'N') {
+				push(@formattedgeno, 'N');
+			} 
 		}
-	} elsif ($thischr eq $desiredchr && $thisend > $desiredend) {
-		last;
-	}
+		print OUT join("\t", @formattedgeno)."\n";
+	}	
 }
-close FILE;
 close OUT;
 
 
