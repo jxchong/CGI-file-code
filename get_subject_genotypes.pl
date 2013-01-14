@@ -11,18 +11,18 @@ use warnings;
 use Getopt::Long;
 
 
-my ($testvarfile, $desiredchr, $desiredstart, $desiredend, $outputfile);
+my ($testvardir, $desiredchr, $desiredstart, $desiredend, $outputfile);
 
 GetOptions(
-	'testvar=s' => \$testvarfile, 
+	'testvardir=s' => \$testvardir, 
 	'chr=s' => \$desiredchr,
 	'start=i' => \$desiredstart,
 	'end=i' => \$desiredend,
 	'out=s' => \$outputfile,
 );
 
-if (!defined $testvarfile) {
-	optionUsage("option --testvar not defined\n");
+if (!defined $testvardir) {
+	optionUsage("option --testvardir not defined\n");
 } elsif (!defined $outputfile) {
 	optionUsage("option --out not defined\n");
 } elsif (!defined $desiredchr) {
@@ -44,6 +44,7 @@ if ($desiredend < $desiredstart) {
 	die;	
 }
 
+my $testvarfile = "$testvardir/all.2012-09-20.testvar.$desiredchr.tsv.gz";
 
 
 my (%findiv2CGI, %CGI2findiv);
@@ -121,7 +122,7 @@ sub optionUsage {
 	my $errorString = $_[0];
 	print "$errorString";
 	print "perl $0 \n";
-	print "\t--testvar\ttestvar file\n";
+	print "\t--testvardir\ttestvar directory\n";
 	print "\t--out\toutput file\n";
 	print "\t--chr\tdesired chr, must be 'chrX, chr1' style\n";
 	print "\t--start\tdesired start\n";
